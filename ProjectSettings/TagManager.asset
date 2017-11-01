@@ -13,8 +13,8 @@ TagManager:
   - UI
   - 
   - 
-  - 
-  - 
+  - Walkable
+  - Unwalkable
   - 
   - 
   - 
@@ -40,4 +40,22 @@ TagManager:
   m_SortingLayers:
   - name: Default
     uniqueID: 0
+    locked: 0
+  - name: Map
+    uniqueID: 4075780353
+    locked: 0
+  - name: Ground
+    uniqueID: 2452699955
+    locked: 0
+  - name: Char
+    uniqueID: 3659771865
+    locked: 0
+  - name: Environment
+    uniqueID: 2919545667
+    locked: 0
+  - name: Walkable
+    uniqueID: 2137107955
+    locked: 0
+  - name: Unwalkable
+    uniqueID: 24984607
     locked: 0
