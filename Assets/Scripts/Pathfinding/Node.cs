@@ -2,7 +2,7 @@
 using System.Collections;
 using UnityEngine;
 
-public class Node {
+public class Node : IHeapItem<Node>{
     public bool walkable {get; set;}
     public Vector2 worldPosition { get; set; }
     public int gCost { get; set; }
@@ -10,6 +10,7 @@ public class Node {
     public int gridX { get; set; }
     public int gridY { get; set; }
     public Node parent { get; set; }
+    int heapIndex;
 
     public Node(bool walkable, Vector2 worldPosition, int gridX, int gridY)
     {
@@ -19,53 +20,33 @@ public class Node {
         this.gridY = gridY;
     }
 
-    public int fCost()
+    public int fCost
     {
-        return gCost + hCost;
+        get{
+            return gCost + hCost;
+        }
     }
 
-    /*public int GetfCost()
+    public int HeapIndex
     {
-        return gCost + hCost;
+        get
+        {
+            return heapIndex;
+        }
+        set
+        {
+            heapIndex = value;
+        }
     }
 
-    public int GetgCost()
+    public int CompareTo(Node n)
     {
-        return gCost;
+        int compare = fCost.CompareTo(n.fCost);
+        if(compare == 0)
+        {
+            compare = hCost.CompareTo(n.hCost);
+        }
+        //Nodes are reversed !
+        return -compare;
     }
-
-    public int GethCost()
-    {
-        return hCost;
-    }
-
-    public int GetGridX()
-    {
-        return gridX;
-    }
-
-    public int GetGridY()
-    {
-        return gridY;
-    }
-
-    internal void SetgCost(int gCost)
-    {
-        this.gCost = gCost;
-    }
-
-    internal void SethCost(int hCost)
-    {
-        this.hCost = hCost;
-    }
-
-    internal void SetParent(Node parent)
-    {
-        this.parent = parent;
-    }
-
-    internal Node GetParent()
-    {
-        return parent;
-    }*/
 }
