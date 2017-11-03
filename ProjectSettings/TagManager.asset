@@ -15,12 +15,12 @@ TagManager:
   - 
   - Walkable
   - Unwalkable
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
+  - Lane
+  - TopLane
+  - MidLane
+  - BotLane
+  - River
+  - Jungle
   - 
   - 
   - 
@@ -58,4 +58,13 @@ TagManager:
     locked: 0
   - name: Unwalkable
     uniqueID: 24984607
+    locked: 0
+  - name: Lane
+    uniqueID: 2801487675
+    locked: 0
+  - name: River
+    uniqueID: 100110053
+    locked: 0
+  - name: Jungle
+    uniqueID: 4191325449
     locked: 0

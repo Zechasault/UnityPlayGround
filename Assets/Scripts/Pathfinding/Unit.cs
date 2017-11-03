@@ -4,43 +4,90 @@ using UnityEngine;
 
 public class Unit : MonoBehaviour {
 
+    const float pathUpdateMoveThreshold = 0.5f;
+    const float minPathUpdateTime = 0.2f;
+
     public Transform target;
     public float speed = 2f;
-
-    Vector2[] path;
-    int targetIndex;
+    public float turnDist = 5f;
+    public float turnSpeed = 3f;
+    //Vector2[] path;
+    //int targetIndex;
+    Path path;
 
     private void Start()
     {
-        PathRequestManager.RequestPath(transform.position, target.position, OnPathFound);
+        StartCoroutine(UpdatePath());
+        //PathRequestManager.RequestPath(transform.position, target.position, OnPathFound);
     }
 
-    public void OnPathFound(Vector2[] newPath, bool pathSuccesfull)
+    public void OnPathFound(Vector2[] wayPoints, bool pathSuccesfull)
     {
         if (pathSuccesfull)
         {
-            path = newPath;
+            path = new Path(wayPoints, new Vector2(transform.position.x, transform.position.y), turnDist);
             StopCoroutine("FollowPath");
             StartCoroutine("FollowPath");
         }
     }
 
-    IEnumerator FollowPath()
+    IEnumerator UpdatePath()
     {
-        Vector2 currentWaypoint = path[0];
+        if (Time.timeSinceLevelLoad < .3f)
+        {
+            yield return new WaitForSeconds(.3f);
+        }
+        PathRequestManager.RequestPath(transform.position, target.position, OnPathFound);
+
+        float sqrMoveThreshold = pathUpdateMoveThreshold * pathUpdateMoveThreshold;
+        Vector3 targetPosOld = target.position;
+
         while (true)
         {
-            if(new Vector2(transform.position.x, transform.position.y) == currentWaypoint)
+            yield return new WaitForSeconds(minPathUpdateTime);
+            if ((target.position - targetPosOld).sqrMagnitude > sqrMoveThreshold)
             {
-                targetIndex++;
-                if(targetIndex >= path.Length)
-                {
-                    yield break;
-                }
-                currentWaypoint = path[targetIndex];
+                PathRequestManager.RequestPath(transform.position, target.position, OnPathFound);
+                targetPosOld = target.position;
             }
-            transform.position = Vector3.MoveTowards(transform.position,
-                currentWaypoint, speed*Time.deltaTime);
+        }
+    }
+
+    IEnumerator FollowPath()
+    {
+        bool followingPath = true;
+        int pathIndex = 0;
+        transform.LookAt(path.lookPoints[0]);
+        while (followingPath)
+        {
+            Vector2 pos2D = new Vector2(transform.position.x, transform.position.y);
+            if (path.turnBoundaries[pathIndex].HasCrossedLine(pos2D))
+            {
+                if(pathIndex == path.finishLineIndex)
+                {
+                    followingPath = false;
+                    break;
+                }
+                else
+                {
+                    pathIndex++;
+                }
+            }
+            if (followingPath)
+            {
+                Vector3 targetTransformPos = new Vector3(path.lookPoints[pathIndex].x, path.lookPoints[pathIndex].y, 0f);
+                Vector3 vectorToTarget = targetTransformPos - transform.position;
+                float angle = Mathf.Atan2(vectorToTarget.y, vectorToTarget.x) * Mathf.Rad2Deg;
+                Quaternion q = Quaternion.AngleAxis(angle, Vector3.forward);
+                transform.rotation = Quaternion.Slerp(transform.rotation, q, Time.deltaTime * turnSpeed);
+
+
+                /*
+                Quaternion targetRotation = Quaternion.LookRotation(path.lookPoints[pathIndex] - pos2D);
+                transform.rotation = Quaternion.Lerp(transform.rotation, targetRotation, Time.deltaTime * turnSpeed);
+                transform.rotation = new Quaternion(0f, 0f, -transform.rotation.z, -transform.rotation.w);*/
+                transform.Translate(new Vector3 (1f,0f,0f) * Time.deltaTime * speed, Space.Self);
+            }
             yield return null;
         }
     }
@@ -49,20 +96,7 @@ public class Unit : MonoBehaviour {
     {
         if (path != null)
         {
-            for(int i=targetIndex; i<path.Length; i++)
-            {
-                Gizmos.color = Color.yellow;
-                Gizmos.DrawCube(path[i], new Vector3(0.1f,0.1f,0.1f));
-                Gizmos.color = Color.black;
-                if (i== targetIndex)
-                {
-                    Gizmos.DrawLine(transform.position, path[i]);
-                }
-                else
-                {
-                    Gizmos.DrawLine(path[i - 1], path[i]);
-                }
-            }
+            path.DrawWgizmos();
         }
     }
 }
