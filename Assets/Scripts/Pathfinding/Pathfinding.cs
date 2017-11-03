@@ -5,72 +5,68 @@ using UnityEngine;
 using System;
 
 public class Pathfinding : MonoBehaviour {
-    PathRequestManager requestManager;
     Grid grid;
+
     private void Awake()
     {
-        requestManager = GetComponent<PathRequestManager>();
         grid = GetComponent<Grid>();
     }
 
-    public void StartFindPath(Vector2 startPos, Vector2 targetPos)
+    public void FindPath(PathRequest request, Action<PathResult> callback)
     {
-        StartCoroutine(FindPath(startPos, targetPos));
-    }
-
-    IEnumerator FindPath(Vector2 startPos, Vector2 targetPos)
-    {
-        Stopwatch sw = new Stopwatch();
-        sw.Start();
-        Vector2[] waypoints = new Vector2[0];
-        bool pathSuccess = false;
-        Node startNode = grid.GetNodeFromWorldPoint(startPos);
-        Node targetNode = grid.GetNodeFromWorldPoint(targetPos);
-        if(startNode.walkable && targetNode.walkable)
         {
-            Heap<Node> openSet = new Heap<Node>(grid.MaxSize);
-            HashSet<Node> closedSet = new HashSet<Node>();
-            openSet.Add(startNode);
-            while(openSet.Count > 0)
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
+            Vector2[] waypoints = new Vector2[0];
+            bool pathSuccess = false;
+            Node startNode = grid.GetNodeFromWorldPoint(request.pathStart);
+            Node targetNode = grid.GetNodeFromWorldPoint(request.pathEnd);
+            if (startNode.walkable && targetNode.walkable)
             {
-                Node currentNode = openSet.RemoveFirst();
-                closedSet.Add(currentNode);
-                if(currentNode == targetNode)
+                Heap<Node> openSet = new Heap<Node>(grid.MaxSize);
+                HashSet<Node> closedSet = new HashSet<Node>();
+                openSet.Add(startNode);
+                while (openSet.Count > 0)
                 {
-                    sw.Stop();
-                    print("PathFinding took " + sw.ElapsedMilliseconds + " ms");
-                    pathSuccess = true;
-                
-                    break;
-                }
-                foreach(Node neighbor in grid.GetNeighbors(currentNode))
-                {
-                    if(!neighbor.walkable || closedSet.Contains(neighbor))
+                    Node currentNode = openSet.RemoveFirst();
+                    closedSet.Add(currentNode);
+                    if (currentNode == targetNode)
                     {
-                        continue;
-                    }
-                    int newMvtCostToNeighbor = currentNode.gCost + GetDistance(currentNode, neighbor) + neighbor.movementPenalty;
-                    if(newMvtCostToNeighbor < neighbor.gCost || !openSet.Contains(neighbor))
-                    {
-                        neighbor.gCost = newMvtCostToNeighbor;
-                        neighbor.hCost = GetDistance(neighbor, targetNode);
-                        neighbor.parent = currentNode;
+                        sw.Stop();
+                        print("PathFinding took " + sw.ElapsedMilliseconds + " ms");
+                        pathSuccess = true;
 
-                        if (!openSet.Contains(neighbor))
+                        break;
+                    }
+                    foreach (Node neighbor in grid.GetNeighbors(currentNode))
+                    {
+                        if (!neighbor.walkable || closedSet.Contains(neighbor))
                         {
-                            openSet.Add(neighbor);
+                            continue;
                         }
-                        else { openSet.UpdateItem(neighbor); }
+                        int newMvtCostToNeighbor = currentNode.gCost + GetDistance(currentNode, neighbor) + neighbor.movementPenalty;
+                        if (newMvtCostToNeighbor < neighbor.gCost || !openSet.Contains(neighbor))
+                        {
+                            neighbor.gCost = newMvtCostToNeighbor;
+                            neighbor.hCost = GetDistance(neighbor, targetNode);
+                            neighbor.parent = currentNode;
+
+                            if (!openSet.Contains(neighbor))
+                            {
+                                openSet.Add(neighbor);
+                            }
+                            else { openSet.UpdateItem(neighbor); }
+                        }
                     }
                 }
             }
+            if (pathSuccess)
+            {
+                waypoints = RetracePath(startNode, targetNode);
+                pathSuccess = waypoints.Length > 0;
+            }
+            callback(new PathResult(waypoints, pathSuccess, request.callback));
         }
-        yield return null; //wait one frame
-        if (pathSuccess)
-        {
-            waypoints = RetracePath(startNode, targetNode);
-        }
-        requestManager.FnishedProcessingPath(waypoints, pathSuccess);
     }
 
     Vector2[] RetracePath(Node startNode, Node endNode)
