@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class Grid : MonoBehaviour {
+    public Transform unit;
     public bool walkableGizmo, unwalkableGizmo;
     public LayerMask unwalkableMask;
     public Vector2 gridWorldSize;
@@ -169,10 +170,15 @@ public class Grid : MonoBehaviour {
         {
             foreach (Node n in grid)
             {
-                if(n.walkable && walkableGizmo)
+                
+                if (n.walkable && walkableGizmo)
                 {
                     Gizmos.color = Color.Lerp(Color.white, Color.black, 
                         Mathf.InverseLerp(penaltyMin, penaltyMax, n.movementPenalty));
+                    if (n == GetNodeFromWorldPoint(new Vector2(unit.position.x, unit.position.y)))
+                    {
+                        Gizmos.color = Color.yellow;
+                    }
                     Gizmos.DrawCube(n.worldPosition, Vector3.one * (nodeDiameter - 0.01f));
                 }
                 else if (!n.walkable && unwalkableGizmo)
