@@ -14,12 +14,23 @@ public class Unit : MonoBehaviour {
     //Vector2[] path;
     //int targetIndex;
     Path path;
+    public bool followingPath = false;
 
     private void Start()
     {
         StartCoroutine(UpdatePath());
         //PathRequestManager.RequestPath(transform.position, target.position, OnPathFound);
     }
+
+    //sent le cul de ouf ------------------------------
+    public void GoTo(Vector3 targetPos)
+    {
+        Transform target = new GameObject().transform;
+        target.position = targetPos;
+        this.target = target;
+        StartCoroutine(UpdatePath());
+        Destroy(target);
+    }//sent le cul de ouf ------------------------------
 
     public void OnPathFound(Vector2[] waypoints, bool pathSuccessful)
     {
@@ -57,7 +68,7 @@ public class Unit : MonoBehaviour {
 
     IEnumerator FollowPath()
     {
-        bool followingPath = true;
+        followingPath = true;
         int pathIndex = 0;
         transform.LookAt(path.lookPoints[0]);
         while (followingPath)
